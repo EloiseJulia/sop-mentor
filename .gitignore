@@ -3,6 +3,8 @@ data/raw-private/
 data/parsed-private/
 data/user-private/
 data/abstract/
+# Batch pipeline output (all subcategory parsed + abstract dirs)
+data/batch/
 
 # Environment variables (may contain API keys)
 .env

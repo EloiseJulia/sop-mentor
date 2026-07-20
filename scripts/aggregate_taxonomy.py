@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
+from argparse import ArgumentParser
 from collections import Counter
 from pathlib import Path
 
@@ -48,11 +49,14 @@ def _assert_not_forbidden(path: Path) -> None:
             pass  # path is not under this forbidden dir — continue
 
 
-def load_abstractions(abstract_dir: Path) -> list[DocumentAbstraction]:
+def load_abstractions(
+    abstract_dir: Path,
+    taxonomy_out_name: str = "corpus_taxonomy.json",
+) -> list[DocumentAbstraction]:
     """Load all DocumentAbstraction records from abstract_dir/*.json."""
     json_files = [
         p for p in abstract_dir.glob("*.json")
-        if p.name != TAXONOMY_OUT.name
+        if p.name != taxonomy_out_name
     ]
 
     records: list[DocumentAbstraction] = []
@@ -118,28 +122,50 @@ def build_taxonomy(records: list[DocumentAbstraction]) -> CorpusTaxonomy:
 
 
 def main() -> None:
+    parser = ArgumentParser(
+        description="Aggregate corpus taxonomy from DocumentAbstraction JSON files."
+    )
+    parser.add_argument(
+        "--abstract-dir",
+        type=Path,
+        default=ABSTRACT_DIR,
+        metavar="DIR",
+        help="Directory containing DocumentAbstraction JSON files (default: data/abstract).",
+    )
+    parser.add_argument(
+        "--out-file",
+        type=Path,
+        default=None,
+        metavar="FILE",
+        help="Output taxonomy JSON path (default: <abstract-dir>/corpus_taxonomy.json).",
+    )
+    args = parser.parse_args()
+
+    abstract_dir: Path = args.abstract_dir
+    out_file: Path = args.out_file if args.out_file else abstract_dir / "corpus_taxonomy.json"
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",
     )
 
-    records = load_abstractions(ABSTRACT_DIR)
+    records = load_abstractions(abstract_dir, taxonomy_out_name=out_file.name)
     if not records:
         log.warning(
             "No valid DocumentAbstraction records found in %s — nothing to aggregate.",
-            ABSTRACT_DIR,
+            abstract_dir,
         )
         return
 
     log.info("Aggregating taxonomy from %d record(s)", len(records))
     taxonomy = build_taxonomy(records)
 
-    ABSTRACT_DIR.mkdir(parents=True, exist_ok=True)
-    TAXONOMY_OUT.write_text(taxonomy.model_dump_json(indent=2), encoding="utf-8")
+    abstract_dir.mkdir(parents=True, exist_ok=True)
+    out_file.write_text(taxonomy.model_dump_json(indent=2), encoding="utf-8")
     log.info(
         "Wrote corpus taxonomy (%d documents) → %s",
         taxonomy.total_documents,
-        TAXONOMY_OUT,
+        out_file,
     )
 
 

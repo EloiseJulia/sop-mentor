@@ -150,6 +150,20 @@ def main() -> None:
         action="store_true",
         help="List files to process without calling the LLM.",
     )
+    parser.add_argument(
+        "--parsed-dir",
+        type=Path,
+        default=PARSED_DIR,
+        metavar="DIR",
+        help="Directory containing parsed Markdown files (default: data/parsed-private).",
+    )
+    parser.add_argument(
+        "--abstract-dir",
+        type=Path,
+        default=ABSTRACT_DIR,
+        metavar="DIR",
+        help="Directory to write DocumentAbstraction JSON files (default: data/abstract).",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -167,11 +181,13 @@ def main() -> None:
         base_url, model = resolve_provider(privacy, extraction)
         client = build_client(base_url)
 
-    ABSTRACT_DIR.mkdir(parents=True, exist_ok=True)
+    parsed_dir: Path = args.parsed_dir
+    abstract_dir: Path = args.abstract_dir
+    abstract_dir.mkdir(parents=True, exist_ok=True)
 
-    md_files = list(PARSED_DIR.glob("*.md"))
+    md_files = list(parsed_dir.glob("*.md"))
     if not md_files:
-        log.warning("No .md files found in %s", PARSED_DIR)
+        log.warning("No .md files found in %s", parsed_dir)
         return
 
     log.info(
@@ -197,7 +213,7 @@ def main() -> None:
 
             result = extract_for_file(client, model, md_path, extraction, args.dry_run)
             if result is not None:
-                out_path = ABSTRACT_DIR / f"{md_path.stem}.json"
+                out_path = abstract_dir / f"{md_path.stem}.json"
                 out_path.write_text(result.model_dump_json(indent=2), encoding="utf-8")
                 log.info("Wrote %s", out_path.name)
             success += 1

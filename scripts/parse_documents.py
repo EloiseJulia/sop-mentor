@@ -11,6 +11,7 @@ Behaviour:
 """
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import sys
@@ -62,14 +63,35 @@ def parse_document(converter: DocumentConverter, src: Path, out_dir: Path) -> No
 
 
 def main() -> None:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    parser = argparse.ArgumentParser(
+        description="Parse PDF/DOCX files to Markdown + metadata JSON."
+    )
+    parser.add_argument(
+        "--raw-dir",
+        type=Path,
+        default=Path("data/raw-private"),
+        metavar="DIR",
+        help="Directory to scan for PDF/DOCX files (default: data/raw-private).",
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=Path("data/parsed-private"),
+        metavar="DIR",
+        help="Directory to write Markdown and metadata JSON (default: data/parsed-private).",
+    )
+    args = parser.parse_args()
+
+    raw_dir: Path = args.raw_dir
+    out_dir: Path = args.out_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     files: list[Path] = (
-        list(RAW_DIR.rglob("*.pdf")) + list(RAW_DIR.rglob("*.docx"))
+        list(raw_dir.rglob("*.pdf")) + list(raw_dir.rglob("*.docx"))
     )
 
     if not files:
-        log.warning("No PDF or DOCX files found under %s", RAW_DIR)
+        log.warning("No PDF or DOCX files found under %s", raw_dir)
         return
 
     log.info("Found %d file(s) to parse", len(files))
@@ -78,7 +100,7 @@ def main() -> None:
 
     for src in files:
         try:
-            parse_document(converter, src, OUT_DIR)
+            parse_document(converter, src, out_dir)
             success += 1
         except Exception as exc:  # noqa: BLE001
             log.error("Failed to parse %s: %s", src.name, exc)
