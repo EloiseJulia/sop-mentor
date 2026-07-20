@@ -75,12 +75,12 @@ def build_taxonomy(records: list[DocumentAbstraction]) -> CorpusTaxonomy:
     n = len(records)
 
     program_counts: dict[str, int] = dict(
-        Counter(r.program_type.value for r in records)
+        Counter(r.program_type for r in records)
     )
     field_counts: dict[str, int] = dict(
-        Counter(r.field_of_study for r in records)
+        Counter(r.field_of_study or "unknown" for r in records)
     )
-    arc_counter = Counter(r.writing_patterns.narrative_arc.value for r in records)
+    arc_counter = Counter(r.narrative_arc for r in records)
     arc_distribution = [
         ArcFrequency(arc=arc, count=count, frequency=count / n)
         for arc, count in arc_counter.most_common()
@@ -97,15 +97,9 @@ def build_taxonomy(records: list[DocumentAbstraction]) -> CorpusTaxonomy:
     top_keywords = [kw for kw, _ in Counter(all_keywords).most_common(30)]
 
     avg_word_count = sum(r.word_count for r in records) / n
-    avg_paragraph_count = (
-        sum(r.structure.paragraph_count for r in records) / n
-    )
-    pct_future = sum(
-        1 for r in records if r.writing_patterns.future_goals_explicit
-    ) / n
-    pct_inter = sum(
-        1 for r in records if r.writing_patterns.interdisciplinary
-    ) / n
+    avg_paragraph_count = sum(r.paragraph_count for r in records) / n
+    pct_future = sum(1 for r in records if r.future_goals_explicit) / n
+    pct_inter = sum(1 for r in records if r.interdisciplinary) / n
 
     return CorpusTaxonomy(
         total_documents=n,

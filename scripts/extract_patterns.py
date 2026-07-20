@@ -84,6 +84,9 @@ def build_client(base_url: str) -> object:
 
     if "11434" in base_url:
         raw = OpenAI(base_url=base_url, api_key="ollama")
+        # Use JSON_SCHEMA mode: Ollama performs grammar-constrained generation,
+        # so the model physically cannot output invalid structure.
+        return instructor.from_openai(raw, mode=instructor.Mode.JSON_SCHEMA)
     else:
         # For external providers the key is read from OPENAI_API_KEY env var
         raw = OpenAI(base_url=base_url)
@@ -211,9 +214,13 @@ def main() -> None:
                 skipped += 1
                 continue
 
+            out_path = abstract_dir / f"{md_path.stem}.json"
+            if out_path.exists():
+                log.info("Skipping (already extracted): %s", md_path.name)
+                success += 1
+                continue
             result = extract_for_file(client, model, md_path, extraction, args.dry_run)
             if result is not None:
-                out_path = abstract_dir / f"{md_path.stem}.json"
                 out_path.write_text(result.model_dump_json(indent=2), encoding="utf-8")
                 log.info("Wrote %s", out_path.name)
             success += 1

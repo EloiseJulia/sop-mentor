@@ -94,11 +94,20 @@ def main() -> None:
         log.warning("No PDF or DOCX files found under %s", raw_dir)
         return
 
-    log.info("Found %d file(s) to parse", len(files))
+    # Pre-filter to only files that haven't been parsed yet
+    pending = [f for f in files if not (out_dir / f"{f.stem}.md").exists()]
+    skipped_count = len(files) - len(pending)
+    if skipped_count:
+        log.info("Skipping %d already-parsed file(s)", skipped_count)
+    if not pending:
+        log.info("All %d file(s) already parsed — nothing to do", len(files))
+        return
+
+    log.info("Found %d file(s) to parse", len(pending))
     converter = DocumentConverter()
     success, failure = 0, 0
 
-    for src in files:
+    for src in pending:
         try:
             parse_document(converter, src, out_dir)
             success += 1
