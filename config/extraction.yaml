@@ -1,0 +1,20 @@
+# LLM extraction configuration for extract_patterns.py
+# -------------------------------------------------------
+
+# Provider string:
+#   "ollama/<model>"  — local Ollama (default, privacy-safe)
+#   "<remote-model>"  — requires allow_external_llm: true in config/privacy.yaml
+provider: "ollama/llama3.2"
+
+# Ollama server base URL (override if you run Ollama on a non-default port).
+ollama_base_url: "http://localhost:11434/v1"
+
+# Minimum essay word count to process; shorter files are skipped.
+min_word_count: 100
+
+# Maximum characters to send to the LLM per request.
+# Longer essays are truncated at this character limit.
+max_input_chars: 16000
+
+# Number of retries on LLM extraction failure (instructor handles retries).
+retries: 2

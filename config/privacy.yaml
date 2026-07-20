@@ -1,0 +1,17 @@
+# Privacy configuration for sop-mentor
+# Read by extract_patterns.py before ANY LLM call.
+# -------------------------------------------------------
+# IMPORTANT: Default is maximum privacy (local-only).
+# Changing allow_external_llm to true will permit sending
+# parsed essay text to remote API endpoints.
+
+# Allow sending document text to external (non-local) LLM providers.
+# Default: false — only local Ollama is permitted.
+allow_external_llm: false
+
+# Retain parsed Markdown in data/parsed-private/ after extraction.
+# Set to false to delete parsed files after abstract extraction is complete.
+retain_parsed_documents: true
+
+# Log level for all sop-mentor scripts.
+log_level: "INFO"
